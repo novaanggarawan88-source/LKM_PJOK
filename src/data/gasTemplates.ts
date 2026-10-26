@@ -265,17 +265,19 @@ function setupInitialSpreadsheet() {
 
   // Tampilkan pesan konfirmasi di UI jika dipanggil langsung oleh guru
   try {
-    SpreadsheetApp.getUi().alert(
-      '✅ Berhasil Disiapkan!',
-      'Seluruh bagian spreadsheet LKM PJOK SMAN 1 Tejakula telah otomatis dibuat:\n\n' +
-      '1. DATA_MURID (25 Siswa XI 1 - XI 4)\n' +
-      '2. BANK_SOAL (20 Butir Soal & Kunci Jawaban)\n' +
-      '3. PENGATURAN_FEEDBACK (5 Tingkat Capaian)\n' +
-      '4. HASIL_LKM (Siap mencatat nilai murid)\n' +
-      '5. REFLEKSI_MURID (Siap mencatat refleksi murid)\n\n' +
-      'Database siap terhubung dengan LKM Digital!',
-      SpreadsheetApp.getUi().ButtonSet.OK
-    );
+    var nl = String.fromCharCode(10);
+    var pesan = [
+      'Seluruh bagian spreadsheet LKM PJOK SMAN 1 Tejakula telah otomatis dibuat:',
+      '',
+      '1. DATA_MURID (25 Siswa XI 1 - XI 4)',
+      '2. BANK_SOAL (20 Butir Soal & Kunci Jawaban)',
+      '3. PENGATURAN_FEEDBACK (5 Tingkat Capaian)',
+      '4. HASIL_LKM (Siap mencatat nilai murid)',
+      '5. REFLEKSI_MURID (Siap mencatat refleksi murid)',
+      '',
+      'Database siap terhubung dengan LKM Digital!'
+    ].join(nl);
+    SpreadsheetApp.getUi().alert('Berhasil Disiapkan!', pesan, SpreadsheetApp.getUi().ButtonSet.OK);
   } catch (e) {}
 
   return { success: true, message: 'Semua sheet berhasil dibuat dan disiapkan secara otomatis.' };
@@ -313,7 +315,7 @@ function checkDatabaseStatus() {
     }
   }
   
-  SpreadsheetApp.getUi().alert('Status Database LKM PJOK', status.join('\n'), SpreadsheetApp.getUi().ButtonSet.OK);
+  SpreadsheetApp.getUi().alert('Status Database LKM PJOK', status.join(String.fromCharCode(10)), SpreadsheetApp.getUi().ButtonSet.OK);
 }
 
 function populateMasterData() {
