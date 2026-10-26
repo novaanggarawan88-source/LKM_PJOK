@@ -29,7 +29,9 @@ import {
   RotateCcw,
   Trash2,
   Key,
-  ShieldAlert
+  ShieldAlert,
+  Zap,
+  Database
 } from 'lucide-react';
 import { lkmEngine } from '../services/lkmEngine';
 import { googleSheetsService } from '../services/googleSheetsService';
@@ -77,6 +79,8 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBackToStud
   const [sheetIdInput, setSheetIdInput] = useState(googleSheetsService.getConfig().sheetId);
   const [syncStatusMsg, setSyncStatusMsg] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isAutoSettingUp, setIsAutoSettingUp] = useState(false);
+  const [autoSetupFeedback, setAutoSetupFeedback] = useState<{ success: boolean; message: string } | null>(null);
 
   // Fetch current data
   const classes = ['Semua Kelas', ...lkmEngine.getClasses()];
@@ -160,6 +164,15 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBackToStud
     setIsSyncing(false);
     setSyncStatusMsg(res.message);
     setTimeout(() => setSyncStatusMsg(''), 5000);
+  };
+
+  const handleTriggerAutoSetup = async () => {
+    setIsAutoSettingUp(true);
+    setAutoSetupFeedback(null);
+    const result = await googleSheetsService.triggerAutoSetup();
+    setIsAutoSettingUp(false);
+    setAutoSetupFeedback(result);
+    setTimeout(() => setAutoSetupFeedback(null), 8000);
   };
 
   const handleCopyCode = () => {
@@ -1059,11 +1072,150 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBackToStud
                 type="button"
                 onClick={handleSaveSheetConfig}
                 disabled={isSyncing}
-                className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-colors"
+                className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
               >
                 <RefreshCw className={`w-4 h-4 ${isSyncing ? 'animate-spin' : ''}`} />
                 <span>{isSyncing ? 'Menyinkronkan...' : 'Simpan & Sinkronkan Sekarang'}</span>
               </button>
+            </div>
+          </div>
+
+          {/* CARD KHUSUS: AUTO-SETUP STRUKTUR SPREADSHEET SETELAH SIMPAN CODE.GS */}
+          <div className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white rounded-3xl p-6 sm:p-8 shadow-xl border border-blue-500/30 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-400 text-slate-950 flex items-center justify-center font-black shadow-lg">
+                  <Zap className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-md bg-amber-400/20 text-amber-300 border border-amber-400/30 text-[10px] sm:text-xs font-bold uppercase tracking-wider">
+                      Fitur Otomatis
+                    </span>
+                    <span className="text-xs text-blue-200">•</span>
+                    <span className="text-xs text-blue-200">Single Source of Truth</span>
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-bold text-white mt-1">
+                    Pembuat Struktur Spreadsheet Otomatis (Auto-Setup)
+                  </h3>
+                  <p className="text-xs text-blue-200 leading-relaxed">
+                    Setelah Anda menyimpan kode <code>Code.gs</code> di Apps Script, sistem otomatis menyiapkan 5 sheet lengkap dengan header berwarna, 25 data siswa, 20 butir soal PJOK, dan formula tanpa perlu membuat tabel manual!
+                  </p>
+                </div>
+              </div>
+
+              {/* Tombol Pemicu Auto-Setup dari Web App */}
+              <button
+                type="button"
+                onClick={handleTriggerAutoSetup}
+                disabled={isAutoSettingUp}
+                className="px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm flex items-center gap-2 shadow-lg transition-all shrink-0 cursor-pointer"
+              >
+                <Zap className={`w-4 h-4 ${isAutoSettingUp ? 'animate-spin' : ''}`} />
+                <span>{isAutoSettingUp ? 'Menjalankan Setup...' : '⚡ Jalankan Auto-Setup Spreadsheet'}</span>
+              </button>
+            </div>
+
+            {/* Feedback Message if triggered */}
+            {autoSetupFeedback && (
+              <div className={`p-4 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2.5 border ${
+                autoSetupFeedback.success
+                  ? 'bg-emerald-950/80 text-emerald-200 border-emerald-500/50'
+                  : 'bg-rose-950/80 text-rose-200 border-rose-500/50'
+              }`}>
+                {autoSetupFeedback.success ? (
+                  <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+                )}
+                <span>{autoSetupFeedback.message}</span>
+              </div>
+            )}
+
+            {/* 4 Cara Kerja Otomatis */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center gap-2 text-amber-300 font-bold text-xs uppercase">
+                  <span className="w-6 h-6 rounded-lg bg-amber-400 text-slate-950 text-xs flex items-center justify-center font-bold">1</span>
+                  <span>Menu Baru di Spreadsheet</span>
+                </div>
+                <p className="text-xs text-blue-100 leading-relaxed">
+                  Buka / refresh Google Spreadsheet Anda. Di bilah menu atas akan muncul otomatis menu baru: <strong className="text-white">"⚡ LKM PJOK SMAN 1 TEJAKULA"</strong> ➔ Klik <strong className="text-white">"🚀 1. Siapkan Otomatis Seluruh Sheet"</strong>.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center gap-2 text-cyan-300 font-bold text-xs uppercase">
+                  <span className="w-6 h-6 rounded-lg bg-cyan-400 text-slate-950 text-xs flex items-center justify-center font-bold">2</span>
+                  <span>Tombol 'Run' di Apps Script</span>
+                </div>
+                <p className="text-xs text-blue-100 leading-relaxed">
+                  Di editor Apps Script, pilih fungsi <strong className="text-white font-mono">setupInitialSpreadsheet</strong> pada dropdown pilihan fungsi, lalu klik tombol <strong className="text-white">▷ Run (Jalankan)</strong>.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center gap-2 text-emerald-300 font-bold text-xs uppercase">
+                  <span className="w-6 h-6 rounded-lg bg-emerald-400 text-slate-950 text-xs flex items-center justify-center font-bold">3</span>
+                  <span>Deteksi Otomatis (Self-Init)</span>
+                </div>
+                <p className="text-xs text-blue-100 leading-relaxed">
+                  Fungsi <strong className="text-white font-mono">checkAndAutoInit()</strong> otomatis memeriksa keberadaan sheet setiap ada permintaan. Jika belum ada, sheet dibuat otomatis secara cerdas.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-2">
+                <div className="flex items-center gap-2 text-purple-300 font-bold text-xs uppercase">
+                  <span className="w-6 h-6 rounded-lg bg-purple-400 text-slate-950 text-xs flex items-center justify-center font-bold">4</span>
+                  <span>Tombol di Aplikasi Ini</span>
+                </div>
+                <p className="text-xs text-blue-100 leading-relaxed">
+                  Setelah memasukkan URL Web App pada kolom konfigurasi di atas, cukup klik tombol <strong className="text-white">"⚡ Jalankan Auto-Setup"</strong> di kanan atas kartu ini.
+                </p>
+              </div>
+            </div>
+
+            {/* 5 Sheet yang Dibuat Otomatis */}
+            <div className="pt-2 border-t border-white/10 space-y-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-amber-300 block">
+                5 Bagian Sheet yang Dibuat Lengkap Secara Otomatis:
+              </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 text-xs">
+                <div className="p-3 rounded-xl bg-blue-900/60 border border-blue-400/30">
+                  <div className="font-bold text-blue-200">1. DATA_MURID</div>
+                  <div className="text-[11px] text-blue-100/80 mt-1">
+                    Kelas, NIS, Nama Murid (25 Siswa SMAN 1 Tejakula XI 1–XI 4)
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-teal-900/60 border border-teal-400/30">
+                  <div className="font-bold text-teal-200">2. BANK_SOAL</div>
+                  <div className="text-[11px] text-teal-100/80 mt-1">
+                    20 Soal PJOK, Opsi A-E, Kunci Rahasia Backend, Indikator, Pembahasan
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-400/30">
+                  <div className="font-bold text-slate-200">3. PENGATURAN_FEEDBACK</div>
+                  <div className="text-[11px] text-slate-300/80 mt-1">
+                    Rentang Nilai 0-100 & 5 Tingkat Umpan Balik Naratif
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-indigo-950/80 border border-indigo-400/30">
+                  <div className="font-bold text-indigo-200">4. HASIL_LKM</div>
+                  <div className="text-[11px] text-indigo-200/80 mt-1">
+                    Rekam Otomatis Tanggal, Jam, Nilai, Benar, Salah, Kategori
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-emerald-950/80 border border-emerald-400/30">
+                  <div className="font-bold text-emerald-200">5. REFLEKSI_MURID</div>
+                  <div className="text-[11px] text-emerald-200/80 mt-1">
+                    Simpan 4 Pertanyaan Refleksi Diri Siswa dari Lembar Refleksi
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 

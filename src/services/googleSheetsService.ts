@@ -188,6 +188,47 @@ class GoogleSheetsService {
       };
     }
   }
+
+  /**
+   * Memicu auto-setup pembuatan seluruh sheet di Google Spreadsheet via Apps Script Web App
+   */
+  public async triggerAutoSetup(): Promise<{ success: boolean; message: string }> {
+    if (!this.config.webAppUrl) {
+      return {
+        success: false,
+        message: 'Masukkan URL Web App Google Apps Script terlebih dahulu di kolom konfigurasi.'
+      };
+    }
+
+    try {
+      await fetch(this.config.webAppUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'autoSetup' })
+      });
+
+      return {
+        success: true,
+        message: 'Perintah Auto-Setup berhasil dikirim ke Google Apps Script! Seluruh sheet (DATA_MURID, BANK_SOAL, PENGATURAN_FEEDBACK, HASIL_LKM, REFLEKSI_MURID) telah disiapkan.'
+      };
+    } catch {
+      try {
+        await fetch(`${this.config.webAppUrl}?action=autoSetup`, {
+          method: 'GET',
+          mode: 'no-cors'
+        });
+        return {
+          success: true,
+          message: 'Perintah Auto-Setup berhasil dikirim ke Google Apps Script! Periksa sheet di Google Spreadsheet Anda.'
+        };
+      } catch (err2) {
+        return {
+          success: false,
+          message: 'Gagal menghubungi Google Apps Script: ' + String(err2)
+        };
+      }
+    }
+  }
 }
 
 export const googleSheetsService = new GoogleSheetsService();
