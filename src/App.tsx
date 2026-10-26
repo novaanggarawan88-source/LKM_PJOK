@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navbar } from './components/Navbar';
 import { StudentHome } from './components/StudentHome';
 import { ExamScreen } from './components/ExamScreen';
@@ -24,6 +24,13 @@ export default function App() {
   const [isReflectionSidebarOpen, setIsReflectionSidebarOpen] = useState(false);
   
   const [showPrintModal, setShowPrintModal] = useState(false);
+
+  useEffect(() => {
+    // Attempt automatic sync if user has configured custom spreadsheet or Web App
+    if (googleSheetsService.isCustomSheetConnected()) {
+      googleSheetsService.syncFromSpreadsheet();
+    }
+  }, []);
 
   // Handle starting exam
   const handleStartExam = ({

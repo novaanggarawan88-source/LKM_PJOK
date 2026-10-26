@@ -12,6 +12,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import { googleSheetsService } from '../services/googleSheetsService';
+import { SpreadsheetConnectModal } from './SpreadsheetConnectModal';
 
 interface NavbarProps {
   currentTab: 'murid' | 'guru';
@@ -29,6 +30,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onRefreshData
 }) => {
   const [showPinModal, setShowPinModal] = useState(false);
+  const [showConnectModal, setShowConnectModal] = useState(false);
   const [pinInput, setPinInput] = useState('');
   const [pinError, setPinError] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
@@ -97,18 +99,25 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             {/* Right Action & Role Switcher */}
             <div className="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
-              {/* Google Sheets Sync Indicator */}
+              {/* Google Sheets Sync & Connector Button */}
               <button
-                onClick={handleTriggerSync}
-                disabled={isSyncing}
-                title="Google Spreadsheet Single Source of Truth"
-                className="hidden md:flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 border border-white/15 text-xs text-blue-100 transition-colors"
+                onClick={() => setShowConnectModal(true)}
+                title="Pengaturan Integrasi Google Spreadsheet"
+                className={`flex items-center space-x-1.5 px-2.5 py-1.5 sm:px-3 sm:py-1.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                  googleSheetsService.isCustomSheetConnected()
+                    ? 'bg-emerald-500/20 hover:bg-emerald-500/30 border-emerald-400/40 text-emerald-200'
+                    : 'bg-amber-500/25 hover:bg-amber-500/35 border-amber-400/40 text-amber-200 animate-pulse'
+                }`}
               >
-                <FileSpreadsheet className={`w-4 h-4 text-emerald-400 ${isSyncing ? 'animate-spin' : ''}`} />
-                <span className="hidden lg:inline">Spreadsheet:</span>
-                <span className="inline-flex items-center gap-1 text-emerald-300 font-semibold">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Tersinkron
+                <FileSpreadsheet className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isSyncing ? 'animate-spin text-white' : 'text-emerald-300'}`} />
+                <span className="hidden sm:inline">Spreadsheet:</span>
+                <span className="inline-flex items-center gap-1 font-bold">
+                  <span className={`w-2 h-2 rounded-full ${
+                    googleSheetsService.isCustomSheetConnected() ? 'bg-emerald-400' : 'bg-amber-400'
+                  }`}></span>
+                  <span className="truncate max-w-[80px] sm:max-w-none">
+                    {googleSheetsService.isCustomSheetConnected() ? 'Terhubung' : 'Sambungkan'}
+                  </span>
                 </span>
               </button>
 
@@ -220,6 +229,17 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
       )}
+
+      {/* Spreadsheet Connection Modal */}
+      <SpreadsheetConnectModal
+        isOpen={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+        onSuccess={() => {
+          if (onRefreshData) onRefreshData();
+          setSyncToast('Spreadsheet berhasil tersambung dan tersinkronisasi!');
+          setTimeout(() => setSyncToast(''), 4000);
+        }}
+      />
     </>
   );
 };

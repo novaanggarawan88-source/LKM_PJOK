@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
   Users, 
@@ -31,10 +31,11 @@ import {
   Key,
   ShieldAlert,
   Zap,
-  Database
+  Database,
+  Link as LinkIcon
 } from 'lucide-react';
 import { lkmEngine } from '../services/lkmEngine';
-import { googleSheetsService } from '../services/googleSheetsService';
+import { googleSheetsService, extractSpreadsheetId } from '../services/googleSheetsService';
 import { SubmissionResult, StudentReflection, QuestionServer, FeedbackRule, LKMInfo } from '../types/lkm';
 import { CODE_GS_CONTENT, SPREADSHEET_SCHEMA_DOCS } from '../data/gasTemplates';
 import { PrintReportModal } from './PrintReportModal';
@@ -81,6 +82,15 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBackToStud
   const [isSyncing, setIsSyncing] = useState(false);
   const [isAutoSettingUp, setIsAutoSettingUp] = useState(false);
   const [autoSetupFeedback, setAutoSetupFeedback] = useState<{ success: boolean; message: string } | null>(null);
+
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const unsub = lkmEngine.subscribe(() => {
+      setTick((t) => t + 1);
+    });
+    return () => unsub();
+  }, []);
 
   // Fetch current data
   const classes = ['Semua Kelas', ...lkmEngine.getClasses()];
@@ -156,14 +166,16 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBackToStud
 
   const handleSaveSheetConfig = async () => {
     setIsSyncing(true);
+    const cleanId = extractSpreadsheetId(sheetIdInput);
     googleSheetsService.saveConfig({
       webAppUrl: webAppUrlInput.trim(),
-      sheetId: sheetIdInput.trim()
+      sheetId: cleanId
     });
+    setSheetIdInput(cleanId);
     const res = await googleSheetsService.syncFromSpreadsheet();
     setIsSyncing(false);
     setSyncStatusMsg(res.message);
-    setTimeout(() => setSyncStatusMsg(''), 5000);
+    setTimeout(() => setSyncStatusMsg(''), 7000);
   };
 
   const handleTriggerAutoSetup = async () => {
@@ -1033,20 +1045,53 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBackToStud
               </div>
             )}
 
+            {/* Status Summary Banner */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold ${
+                  googleSheetsService.isCustomSheetConnected() ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                }`}>
+                  <FileSpreadsheet className="w-5 h-5" />
+                </div>
+                <div>
+                  <span className="font-bold text-slate-800 block text-xs sm:text-sm">
+                    {googleSheetsService.isCustomSheetConnected()
+                      ? '🟢 Terhubung ke Google Spreadsheet Kustom'
+                      : '🟡 Menggunakan Database Standar SMAN 1 Tejakula'}
+                  </span>
+                  <span className="text-[11px] text-slate-500">
+                    {lkmEngine.getTotalStudentsCount()} Siswa terdaftar • {lkmEngine.getTotalQuestionsCount()} Soal aktif • {googleSheetsService.getConfig().lastSyncTime || 'Belum tersinkronisasi'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="text-[11px] font-mono text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200">
+                Sheet ID: <strong>{googleSheetsService.getConfig().sheetId || '(Belum diatur)'}</strong>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Google Spreadsheet ID
+                  Link atau ID Google Spreadsheet Anda
                 </label>
-                <input
-                  type="text"
-                  value={sheetIdInput}
-                  onChange={(e) => setSheetIdInput(e.target.value)}
-                  placeholder="Contoh: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms"
-                  className="w-full px-4 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
-                />
+                <div className="relative">
+                  <LinkIcon className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+                  <input
+                    type="text"
+                    value={sheetIdInput}
+                    onChange={(e) => setSheetIdInput(e.target.value)}
+                    placeholder="Contoh: https://docs.google.com/spreadsheets/d/1BxiMVs.../edit atau ID-nya"
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-300 font-mono text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                </div>
+                {extractSpreadsheetId(sheetIdInput) && extractSpreadsheetId(sheetIdInput) !== sheetIdInput && (
+                  <p className="text-[11px] text-emerald-700 font-mono mt-1">
+                    ✓ ID Terdeteksi: {extractSpreadsheetId(sheetIdInput)}
+                  </p>
+                )}
                 <span className="text-[11px] text-slate-400 mt-1 block">
-                  Dapat ditemukan dari URL Google Sheet di antara \`/d/\` dan \`/edit\`.
+                  Cukup tempel link URL spreadsheet lengkap dari browser Anda. Pastikan akses disetel: <em>"Siapa saja yang memiliki link dapat melihat"</em>.
                 </span>
               </div>
 

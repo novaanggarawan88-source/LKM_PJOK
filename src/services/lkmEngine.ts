@@ -108,6 +108,77 @@ class LKMEngineService {
     }
   }
 
+  private listeners: (() => void)[] = [];
+
+  public subscribe(listener: () => void): () => void {
+    this.listeners.push(listener);
+    return () => {
+      this.listeners = this.listeners.filter((l) => l !== listener);
+    };
+  }
+
+  private notifyListeners() {
+    this.listeners.forEach((fn) => {
+      try {
+        fn();
+      } catch (err) {
+        console.error('Error notifying listener:', err);
+      }
+    });
+  }
+
+  public setStudents(newStudents: Student[]) {
+    if (newStudents && newStudents.length > 0) {
+      this.students = newStudents;
+      try {
+        localStorage.setItem(STORAGE_KEYS.STUDENTS, JSON.stringify(this.students));
+      } catch (e) {
+        console.error('Gagal menyimpan students ke storage', e);
+      }
+      this.notifyListeners();
+    }
+  }
+
+  public setQuestions(newQuestions: QuestionServer[]) {
+    if (newQuestions && newQuestions.length > 0) {
+      this.questions = newQuestions;
+      try {
+        localStorage.setItem(STORAGE_KEYS.QUESTIONS, JSON.stringify(this.questions));
+      } catch (e) {
+        console.error('Gagal menyimpan questions ke storage', e);
+      }
+      this.notifyListeners();
+    }
+  }
+
+  public setFeedbackRules(rules: FeedbackRule[]) {
+    if (rules && rules.length > 0) {
+      this.feedbackRules = rules;
+      try {
+        localStorage.setItem(STORAGE_KEYS.FEEDBACK_RULES, JSON.stringify(this.feedbackRules));
+      } catch (e) {
+        console.error('Gagal menyimpan feedback rules ke storage', e);
+      }
+      this.notifyListeners();
+    }
+  }
+
+  public setSubmissions(newSubmissions: SubmissionResult[]) {
+    if (newSubmissions && Array.isArray(newSubmissions)) {
+      this.submissions = newSubmissions;
+      this.saveSubmissions();
+      this.notifyListeners();
+    }
+  }
+
+  public getTotalStudentsCount(): number {
+    return this.students.length;
+  }
+
+  public getTotalQuestionsCount(): number {
+    return this.questions.length;
+  }
+
   // --- PUBLIC GETTERS ---
 
   public getClasses(): string[] {

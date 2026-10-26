@@ -13,10 +13,15 @@ import {
   School,
   FileCheck2,
   Calendar,
-  Clock
+  Clock,
+  FileSpreadsheet,
+  RefreshCw,
+  Link as LinkIcon
 } from 'lucide-react';
 import { lkmEngine } from '../services/lkmEngine';
+import { googleSheetsService } from '../services/googleSheetsService';
 import { Student, LKMInfo, SubmissionResult } from '../types/lkm';
+import { SpreadsheetConnectModal } from './SpreadsheetConnectModal';
 
 interface StudentHomeProps {
   onStartExam: (data: {
@@ -42,18 +47,43 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   const [existingSubmission, setExistingSubmission] = useState<SubmissionResult | null>(null);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
-  useEffect(() => {
+  const [showConnectModal, setShowConnectModal] = useState<boolean>(false);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncToast, setSyncToast] = useState<string>('');
+
+  const loadData = () => {
     const classList = lkmEngine.getClasses();
     setClasses(classList);
-    if (classList.length > 0) {
+    if (classList.length > 0 && !selectedClass) {
       setSelectedClass(classList[0]);
     }
 
     const activeLkms = lkmEngine.getActiveLKMs();
     setLkms(activeLkms);
-    if (activeLkms.length > 0) {
+    if (activeLkms.length > 0 && !selectedLKM) {
       setSelectedLKM(activeLkms[0]);
     }
+  };
+
+  useEffect(() => {
+    loadData();
+
+    // Subscribe to engine changes (e.g. after sync)
+    const unsubscribe = lkmEngine.subscribe(() => {
+      loadData();
+      if (selectedClass) {
+        setStudentsInClass(lkmEngine.getStudentsByClass(selectedClass));
+      }
+    });
+
+    // Auto sync from spreadsheet on mount if configured
+    if (googleSheetsService.isCustomSheetConnected()) {
+      googleSheetsService.syncFromSpreadsheet();
+    }
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Update students dropdown when class changes
@@ -80,6 +110,14 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
       setExistingSubmission(null);
     }
   }, [selectedStudent, selectedLKM]);
+
+  const handleQuickSync = async () => {
+    setIsSyncing(true);
+    const res = await googleSheetsService.syncFromSpreadsheet();
+    setIsSyncing(false);
+    setSyncToast(res.message);
+    setTimeout(() => setSyncToast(''), 4000);
+  };
 
   const handleStart = (isRetake: boolean = false) => {
     setErrorMessage('');
@@ -160,6 +198,62 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
           </div>
 
           <div className="space-y-5">
+            {/* Live Spreadsheet Connection Status Card */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                  googleSheetsService.isCustomSheetConnected() ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                }`}>
+                  <FileSpreadsheet className="w-4 h-4" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5 font-bold text-slate-800">
+                    <span className={`w-2 h-2 rounded-full ${
+                      googleSheetsService.isCustomSheetConnected() ? 'bg-emerald-500' : 'bg-amber-500'
+                    }`}></span>
+                    <span className="truncate">
+                      {googleSheetsService.isCustomSheetConnected()
+                        ? 'Google Spreadsheet Terhubung'
+                        : 'Database SMAN 1 Tejakula (Standar)'}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-slate-500 block truncate">
+                    {studentsInClass.length} murid di kelas ini • {lkmEngine.getTotalQuestionsCount()} butir soal aktif
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-auto">
+                <button
+                  type="button"
+                  onClick={handleQuickSync}
+                  disabled={isSyncing}
+                  className="px-2.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Muat ulang data dari Google Spreadsheet"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isSyncing ? 'animate-spin' : ''}`} />
+                  <span>Sinkron</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowConnectModal(true)}
+                  className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm transition-colors cursor-pointer"
+                >
+                  <LinkIcon className="w-3 h-3" />
+                  <span>{googleSheetsService.isCustomSheetConnected() ? 'Ubah Link' : 'Hubungkan Spreadsheet'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Sync toast notification */}
+            {syncToast && (
+              <div className="p-3 rounded-xl bg-emerald-100 text-emerald-900 border border-emerald-300 text-xs font-semibold flex items-center gap-2 animate-fadeIn">
+                <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>{syncToast}</span>
+              </div>
+            )}
+
             {/* 1. Pilih Kelas */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
@@ -385,6 +479,16 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Spreadsheet Connection Modal */}
+      <SpreadsheetConnectModal
+        isOpen={showConnectModal}
+        onClose={() => setShowConnectModal(false)}
+        onSuccess={() => {
+          setSyncToast('Spreadsheet berhasil tersambung dan tersinkronisasi!');
+          setTimeout(() => setSyncToast(''), 4000);
+        }}
+      />
     </div>
   );
 };

@@ -333,6 +333,8 @@ function doGet(e) {
   
   if (action === 'autoSetup') {
     return createJsonResponse(setupInitialSpreadsheet());
+  } else if (action === 'getAllData' || action === 'sync') {
+    return createJsonResponse(apiGetAllData());
   } else if (action === 'getClasses') {
     return createJsonResponse(apiGetClasses());
   } else if (action === 'getStudents') {
@@ -515,6 +517,100 @@ function apiGetQuestions(lkmId) {
     });
   }
   return questions;
+}
+
+/**
+ * Mengambil seluruh data master untuk sinkronisasi aplikasi
+ */
+function apiGetAllData() {
+  return {
+    success: true,
+    classes: apiGetClasses(),
+    students: apiGetStudents(),
+    questions: apiGetQuestionsWithDetails(),
+    feedbackRules: apiGetFeedbackRules(),
+    lkms: apiGetLKMList()
+  };
+}
+
+function apiGetQuestionsWithDetails() {
+  var ss = getSpreadsheet();
+  var sheet = ss.getSheetByName('BANK_SOAL');
+  if (!sheet) return [];
+  
+  var data = sheet.getDataRange().getValues();
+  var header = data[0];
+  
+  var colId = header.indexOf('ID Soal');
+  var colNomor = header.indexOf('Nomor');
+  var colTipe = header.indexOf('Tipe');
+  var colIndikator = header.indexOf('Indikator');
+  var colSub = header.indexOf('Submateri');
+  var colSoal = header.indexOf('Pertanyaan');
+  var colKunci = header.indexOf('Kunci');
+  var colBobot = header.indexOf('Bobot');
+  var colPembahasan = header.indexOf('Pembahasan');
+  var colSaran = header.indexOf('Saran Belajar');
+  var colA = header.indexOf('A');
+  var colB = header.indexOf('B');
+  var colC = header.indexOf('C');
+  var colD = header.indexOf('D');
+  var colE = header.indexOf('E');
+  
+  var questions = [];
+  for (var i = 1; i < data.length; i++) {
+    var r = data[i];
+    var tipe = String(r[colTipe] || 'pilihan_ganda').trim().toLowerCase();
+    
+    var opsi = [];
+    if (tipe === 'pilihan_ganda') {
+      if (r[colA]) opsi.push({ key: 'A', text: String(r[colA]) });
+      if (r[colB]) opsi.push({ key: 'B', text: String(r[colB]) });
+      if (r[colC]) opsi.push({ key: 'C', text: String(r[colC]) });
+      if (r[colD]) opsi.push({ key: 'D', text: String(r[colD]) });
+      if (r[colE]) opsi.push({ key: 'E', text: String(r[colE]) });
+    } else if (tipe === 'benar_salah') {
+      opsi = [
+        { key: 'BENAR', text: 'BENAR' },
+        { key: 'SALAH', text: 'SALAH' }
+      ];
+    }
+    
+    questions.push({
+      id: String(r[colId] || ('Q' + i)),
+      nomor: Number(r[colNomor] || i),
+      tipe: tipe,
+      indikator: String(r[colIndikator] || 'Umum'),
+      submateri: String(r[colSub] || ''),
+      pertanyaan: String(r[colSoal] || ''),
+      kunciJawaban: String(r[colKunci] || 'A'),
+      pembahasan: String(r[colPembahasan] || ''),
+      saranBelajar: String(r[colSaran] || ''),
+      opsi: opsi,
+      bobot: Number(r[colBobot] || 5)
+    });
+  }
+  return questions;
+}
+
+function apiGetFeedbackRules() {
+  var ss = getSpreadsheet();
+  var sheet = ss.getSheetByName('PENGATURAN_FEEDBACK');
+  if (!sheet) return [];
+  
+  var data = sheet.getDataRange().getValues();
+  var rules = [];
+  for (var i = 1; i < data.length; i++) {
+    var r = data[i];
+    rules.push({
+      minScore: Number(r[0]),
+      maxScore: Number(r[1]),
+      kategori: String(r[2]),
+      arah: String(r[3]),
+      teks: String(r[4])
+    });
+  }
+  return rules;
 }
 
 // -------------------------------------------------------------
