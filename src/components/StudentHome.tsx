@@ -109,53 +109,53 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-8 animate-fadeIn">
+    <div className="w-full max-w-5xl mx-auto px-3 sm:px-6 py-4 sm:py-8 space-y-5 sm:space-y-8 animate-fadeIn overflow-x-hidden">
       {/* Hero Welcome Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-blue-900 via-blue-800 to-teal-800 text-white p-6 sm:p-10 shadow-xl border border-blue-700/50">
+      <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-br from-blue-900 via-blue-800 to-teal-800 text-white p-4 sm:p-8 shadow-xl border border-blue-700/50">
         <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-0 left-0 -ml-16 -mb-16 w-64 h-64 bg-blue-500/20 rounded-full blur-2xl pointer-events-none"></div>
 
-        <div className="relative z-10 max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-emerald-300">
+        <div className="relative z-10 max-w-3xl space-y-3 sm:space-y-4">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[11px] sm:text-xs font-semibold text-emerald-300">
             <School className="w-3.5 h-3.5 text-emerald-400" />
             <span>SMA Negeri 1 Tejakula • PJOK Fase F</span>
           </div>
 
-          <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight leading-tight">
+          <h1 className="text-xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight">
             LKM DIGITAL PJOK
           </h1>
-          <p className="text-base sm:text-xl font-medium text-emerald-300">
+          <p className="text-sm sm:text-lg md:text-xl font-medium text-emerald-300">
             "Belajar Aktif, Berpikir Kritis, dan Refleksi Diri"
           </p>
 
-          <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed pt-1">
+          <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed pt-0.5">
             Selamat datang di media asesmen dan lembar kerja digital mata pelajaran Pendidikan Jasmani, Olahraga, dan Kesehatan (PJOK). Seluruh soal, identitas, dan hasil penilaian otomatis terintegrasi langsung dengan master Google Spreadsheet.
           </p>
 
-          <div className="pt-2 flex flex-wrap items-center gap-4 text-xs text-blue-200">
-            <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-lg border border-white/10">
-              <span className="font-semibold text-white">Guru Pengampu:</span>
+          <div className="pt-1 flex flex-wrap items-center gap-2 sm:gap-4 text-[11px] sm:text-xs text-blue-200">
+            <div className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1.5 rounded-lg border border-white/10">
+              <span className="font-semibold text-white">Guru:</span>
               <span>I Ketut Agus Nova Anggarawan, S.Pd.</span>
             </div>
-            <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-lg border border-white/10">
-              <span className="font-semibold text-white">Sumber Data:</span>
-              <span className="text-emerald-300 font-medium">Google Spreadsheet Live</span>
+            <div className="flex items-center gap-1.5 bg-black/20 px-2.5 py-1.5 rounded-lg border border-white/10">
+              <span className="font-semibold text-white">Database:</span>
+              <span className="text-emerald-300 font-medium">Google Spreadsheet</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Grid: Form Identitas & Info LKM */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8">
         {/* Identitas Murid Form Card */}
-        <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80">
-          <div className="flex items-center space-x-3 mb-6 pb-4 border-b border-slate-100">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+        <div className="lg:col-span-7 bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-sm border border-slate-200/80">
+          <div className="flex items-center space-x-2.5 mb-4 sm:mb-6 pb-3 sm:pb-4 border-b border-slate-100">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold shrink-0">
               <UserCheck className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">Form Identitas Murid</h2>
-              <p className="text-xs text-slate-500">Pilih kelas dan nama Anda sesuai presensi resmi</p>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900">Form Identitas Murid</h2>
+              <p className="text-[11px] sm:text-xs text-slate-500">Pilih kelas dan nama Anda sesuai presensi resmi</p>
             </div>
           </div>
 
@@ -303,21 +303,21 @@ export const StudentHome: React.FC<StudentHomeProps> = ({
         </div>
 
         {/* LKM Details & Objectives Card */}
-        <div className="lg:col-span-5 space-y-6">
+        <div className="lg:col-span-5 space-y-4 sm:space-y-6">
           {selectedLKM && (
-            <div className="bg-white rounded-3xl p-6 sm:p-7 shadow-sm border border-slate-200/80 space-y-5">
-              <div className="flex items-center space-x-2.5 pb-3 border-b border-slate-100">
-                <BookOpen className="w-5 h-5 text-emerald-600" />
-                <h3 className="font-bold text-slate-900 text-sm uppercase tracking-wider">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-7 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-5">
+              <div className="flex items-center space-x-2 pb-2.5 sm:pb-3 border-b border-slate-100">
+                <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
+                <h3 className="font-bold text-slate-900 text-xs sm:text-sm uppercase tracking-wider">
                   Informasi Lembar Kerja
                 </h3>
               </div>
 
               <div>
-                <span className="text-[11px] font-semibold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
+                <span className="text-[10px] sm:text-[11px] font-semibold text-emerald-700 uppercase tracking-wider bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200">
                   {selectedLKM.fase}
                 </span>
-                <h4 className="text-base font-bold text-slate-900 mt-2">
+                <h4 className="text-sm sm:text-base font-bold text-slate-900 mt-1.5 sm:mt-2">
                   {selectedLKM.judul}
                 </h4>
                 <p className="text-xs text-slate-500 mt-1">

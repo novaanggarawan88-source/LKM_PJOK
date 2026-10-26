@@ -23,11 +23,17 @@ import {
   Award,
   Layers,
   HelpCircle,
-  MessageSquare
+  MessageSquare,
+  SlidersHorizontal,
+  Save,
+  RotateCcw,
+  Trash2,
+  Key,
+  ShieldAlert
 } from 'lucide-react';
 import { lkmEngine } from '../services/lkmEngine';
 import { googleSheetsService } from '../services/googleSheetsService';
-import { SubmissionResult, StudentReflection, QuestionServer, FeedbackRule } from '../types/lkm';
+import { SubmissionResult, StudentReflection, QuestionServer, FeedbackRule, LKMInfo } from '../types/lkm';
 import { CODE_GS_CONTENT, SPREADSHEET_SCHEMA_DOCS } from '../data/gasTemplates';
 import { PrintReportModal } from './PrintReportModal';
 
@@ -36,13 +42,24 @@ interface TeacherDashboardProps {
 }
 
 export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBackToStudent }) => {
-  const [activeTab, setActiveTab] = useState<'analisis' | 'rekap' | 'banksoal' | 'integrasi'>('analisis');
+  const [activeTab, setActiveTab] = useState<'analisis' | 'rekap' | 'banksoal' | 'pengaturan' | 'integrasi'>('analisis');
   
-  // Filters
+  // Filters for Submissions
   const [selectedKelas, setSelectedKelas] = useState<string>('Semua Kelas');
   const [selectedMateri, setSelectedMateri] = useState<string>('Semua Materi');
   const [searchQuery, setSearchQuery] = useState<string>('');
   
+  // Filters for Bank Soal
+  const [questionSearch, setQuestionSearch] = useState<string>('');
+  const [questionTypeFilter, setQuestionTypeFilter] = useState<string>('semua');
+
+  // Settings states
+  const activeLkm = lkmEngine.getActiveLKMs()[0];
+  const [allowRetake, setAllowRetake] = useState<boolean>(activeLkm ? activeLkm.allowRetake : true);
+  const [lkmIsActive, setLkmIsActive] = useState<boolean>(activeLkm ? activeLkm.isActive : true);
+  const [editableFeedbackRules, setEditableFeedbackRules] = useState<FeedbackRule[]>(lkmEngine.getFeedbackRules());
+  const [settingSaveToast, setSettingSaveToast] = useState<string>('');
+
   // Selected detail modal
   const [selectedSubmissionDetail, setSelectedSubmissionDetail] = useState<SubmissionResult | null>(null);
   const [selectedReflectionDetail, setSelectedReflectionDetail] = useState<StudentReflection | null>(null);
@@ -244,19 +261,31 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBackToStud
 
         <button
           onClick={() => setActiveTab('banksoal')}
-          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap ${
+          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'banksoal'
               ? 'bg-blue-600 text-white shadow-md'
               : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
           }`}
         >
           <BookOpen className="w-4 h-4" />
-          <span>Bank Soal & Pengaturan</span>
+          <span>Bank Soal ({rawQuestions.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('pengaturan')}
+          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
+            activeTab === 'pengaturan'
+              ? 'bg-blue-600 text-white shadow-md'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+          }`}
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          <span>Pengaturan LKM & Sistem</span>
         </button>
 
         <button
           onClick={() => setActiveTab('integrasi')}
-          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap ${
+          className={`px-4 py-2.5 rounded-xl flex items-center gap-2 transition-all whitespace-nowrap cursor-pointer ${
             activeTab === 'integrasi'
               ? 'bg-emerald-600 text-white shadow-md'
               : 'text-emerald-700 hover:bg-emerald-50'
@@ -566,76 +595,394 @@ export const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ onBackToStud
         </div>
       )}
 
-      {/* TAB 3: BANK SOAL & PENGATURAN */}
+      {/* TAB 3: MASTER BANK SOAL PJOK */}
       {activeTab === 'banksoal' && (
-        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80 space-y-6 animate-fadeIn">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div className="bg-white rounded-3xl p-4 sm:p-8 shadow-sm border border-slate-200/80 space-y-6 animate-fadeIn">
+          {/* Header & Filter Controls */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
             <div>
-              <h2 className="text-lg font-bold text-slate-900">
-                Master Bank Soal PJOK (Kebugaran Jasmani)
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] sm:text-xs font-bold">
+                  MASTER KURIKULUM PJOK
+                </span>
+                <span className="text-xs text-slate-400">•</span>
+                <span className="text-xs font-semibold text-slate-600">Fase F (Kelas XI)</span>
+              </div>
+              <h2 className="text-base sm:text-xl font-bold text-slate-900 mt-1">
+                Bank Soal PJOK – Kebugaran Jasmani & Circuit Training
               </h2>
               <p className="text-xs text-slate-500">
-                20 Butir Soal Terkalibrasi dengan Kunci Jawaban, Bobot, dan Pembahasan Backend
+                Dilengkapi kunci jawaban rahasia backend, indikator kompetensi, pembobotan, dan pembahasan
               </p>
             </div>
+
+            <span className="self-start md:self-auto px-3.5 py-1.5 rounded-xl bg-slate-100 text-slate-800 text-xs font-bold">
+              Total: {rawQuestions.length} Butir Soal
+            </span>
+          </div>
+
+          {/* Search and Filter Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50 p-3 sm:p-4 rounded-2xl border border-slate-200">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+              <input
+                type="text"
+                value={questionSearch}
+                onChange={(e) => setQuestionSearch(e.target.value)}
+                placeholder="Cari pertanyaan, indikator, atau materi..."
+                className="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-300 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+
             <div className="flex items-center gap-2">
-              <span className="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
-                Total: {rawQuestions.length} Soal
-              </span>
+              <label className="text-xs font-bold text-slate-600 shrink-0">Tipe:</label>
+              <select
+                value={questionTypeFilter}
+                onChange={(e) => setQuestionTypeFilter(e.target.value)}
+                className="px-3 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 bg-white focus:ring-2 focus:ring-blue-500 outline-none cursor-pointer"
+              >
+                <option value="semua">Semua Tipe Soal</option>
+                <option value="pilihan_ganda">Pilihan Ganda</option>
+                <option value="benar_salah">Benar / Salah</option>
+                <option value="isian">Isian Singkat</option>
+                <option value="uraian">Uraian</option>
+              </select>
             </div>
           </div>
 
+          {/* Question List */}
           <div className="space-y-4">
-            {rawQuestions.map((q) => (
-              <div key={q.id} className="p-4 sm:p-5 rounded-2xl border border-slate-200 hover:border-slate-300 transition-colors space-y-2.5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-lg bg-blue-900 text-white font-bold text-xs flex items-center justify-center">
-                      {q.nomor}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 text-xs font-semibold">
-                      {q.tipe.toUpperCase()}
-                    </span>
-                    <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-xs font-semibold">
-                      Indikator: {q.indikator}
-                    </span>
+            {rawQuestions
+              .filter((q) => {
+                const matchType = questionTypeFilter === 'semua' || q.tipe === questionTypeFilter;
+                const matchSearch =
+                  questionSearch.trim() === '' ||
+                  q.pertanyaan.toLowerCase().includes(questionSearch.toLowerCase()) ||
+                  q.indikator.toLowerCase().includes(questionSearch.toLowerCase()) ||
+                  q.submateri.toLowerCase().includes(questionSearch.toLowerCase()) ||
+                  q.kunciJawaban.toLowerCase().includes(questionSearch.toLowerCase());
+                return matchType && matchSearch;
+              })
+              .map((q) => (
+                <div key={q.id} className="p-4 sm:p-5 rounded-2xl border border-slate-200 hover:border-slate-300 transition-colors space-y-3 bg-white">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-lg bg-blue-900 text-white font-bold text-xs flex items-center justify-center">
+                        {q.nomor}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 text-[11px] font-semibold border border-blue-200">
+                        {q.tipe.toUpperCase()}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 text-[11px] font-semibold border border-emerald-200">
+                        Indikator: {q.indikator}
+                      </span>
+                      {q.submateri && (
+                        <span className="hidden sm:inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px] font-medium">
+                          {q.submateri}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
+                        Bobot: {q.bobot} Poin
+                      </span>
+                      <span className="px-2.5 py-0.5 rounded-md bg-emerald-600 text-white font-black shadow-sm">
+                        Kunci: {q.kunciJawaban}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs">
-                    <span className="font-bold text-slate-500">Bobot: {q.bobot} Poin</span>
-                    <span className="px-2.5 py-0.5 rounded-md bg-emerald-600 text-white font-black">
-                      Kunci: {q.kunciJawaban}
-                    </span>
+
+                  <p className="text-xs sm:text-sm font-semibold text-slate-900 leading-relaxed">
+                    {q.pertanyaan}
+                  </p>
+
+                  {/* Options */}
+                  {q.opsi && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-700 pt-1">
+                      {q.opsi.map((op) => {
+                        const isKey = op.key === q.kunciJawaban;
+                        return (
+                          <div
+                            key={op.key}
+                            className={`p-2.5 rounded-xl border ${
+                              isKey
+                                ? 'bg-emerald-50 border-emerald-400 font-bold text-emerald-950 ring-1 ring-emerald-300'
+                                : 'bg-slate-50 border-slate-200'
+                            }`}
+                          >
+                            <span className="font-bold mr-1.5">{op.key}.</span> {op.text}
+                            {isKey && (
+                              <span className="ml-1 text-[10px] text-emerald-700 font-extrabold uppercase tracking-wider">
+                                (KUNCI)
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* Pembahasan & Saran Belajar */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 pt-1 text-xs">
+                    {q.pembahasan && (
+                      <div className="p-3 rounded-xl bg-blue-50/70 text-blue-950 border border-blue-200/60 leading-relaxed">
+                        <strong className="block text-blue-800 font-bold mb-0.5">Pembahasan Guru:</strong>
+                        {q.pembahasan}
+                      </div>
+                    )}
+
+                    {q.saranBelajar && (
+                      <div className="p-3 rounded-xl bg-amber-50/70 text-amber-950 border border-amber-200/60 leading-relaxed">
+                        <strong className="block text-amber-800 font-bold mb-0.5">Saran Belajar jika Salah:</strong>
+                        {q.saranBelajar}
+                      </div>
+                    )}
                   </div>
                 </div>
+              ))}
+          </div>
+        </div>
+      )}
 
-                <p className="text-sm font-semibold text-slate-900 leading-relaxed">
-                  {q.pertanyaan}
+      {/* TAB 4: PENGATURAN LKM & SISTEM (TERPISAH) */}
+      {activeTab === 'pengaturan' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Toast Notification */}
+          {settingSaveToast && (
+            <div className="p-4 rounded-2xl bg-emerald-100 text-emerald-900 text-xs sm:text-sm font-semibold flex items-center gap-2 border border-emerald-300 animate-fadeIn">
+              <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+              <span>{settingSaveToast}</span>
+            </div>
+          )}
+
+          {/* Section 1: Pengaturan Akses & Kebijakan Pengerjaan LKM */}
+          <div className="bg-white rounded-3xl p-5 sm:p-8 shadow-sm border border-slate-200/80 space-y-6">
+            <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+                <SlidersHorizontal className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                  Pengaturan Akses & Kebijakan Lembar Kerja (LKM)
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Kelola ketersediaan pengerjaan dan izin pengulangan pengerjaan bagi murid
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Allow Retake */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs sm:text-sm text-slate-900">
+                    Izin Pengerjaan Ulang (Retake)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setAllowRetake(!allowRetake)}
+                    className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+                      allowRetake ? 'bg-emerald-600 justify-end' : 'bg-slate-300 justify-start'
+                    }`}
+                  >
+                    <span className="bg-white w-4 h-4 rounded-full shadow-md"></span>
+                  </button>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Jika diaktifkan, murid yang telah mengumpulkan jawaban dapat mengerjakan ulang untuk perbaikan nilai.
+                </p>
+                <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded ${
+                  allowRetake ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-700'
+                }`}>
+                  Status: {allowRetake ? 'Diizinkan (Murid dapat mengulang)' : 'Terkunci (Hanya 1 kali pengerjaan)'}
+                </span>
+              </div>
+
+              {/* LKM Active Toggle */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-xs sm:text-sm text-slate-900">
+                    Status Ketersediaan LKM
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setLkmIsActive(!lkmIsActive)}
+                    className={`w-12 h-6 flex items-center rounded-full p-1 cursor-pointer transition-colors ${
+                      lkmIsActive ? 'bg-emerald-600 justify-end' : 'bg-slate-300 justify-start'
+                    }`}
+                  >
+                    <span className="bg-white w-4 h-4 rounded-full shadow-md"></span>
+                  </button>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Mengontrol apakah lembar kerja aktif dan dapat diakses oleh murid di kelas.
+                </p>
+                <span className={`inline-block text-[11px] font-bold px-2 py-0.5 rounded ${
+                  lkmIsActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                }`}>
+                  Status: {lkmIsActive ? 'LKM Dibuka (Aktif)' : 'LKM Ditutup Sementara'}
+                </span>
+              </div>
+            </div>
+
+            {/* Identitas Pengampu */}
+            <div className="p-4 rounded-2xl bg-blue-50/60 border border-blue-200/60 text-xs text-blue-950 space-y-1">
+              <span className="font-bold block uppercase text-[11px] text-blue-800">
+                Informasi Satuan Pendidikan & Pengampu:
+              </span>
+              <p>Sekolah: <strong>SMA Negeri 1 Tejakula</strong> • Jenjang: <strong>Fase F (Kelas XI)</strong></p>
+              <p>Guru PJOK: <strong>I Ketut Agus Nova Anggarawan, S.Pd.</strong></p>
+            </div>
+          </div>
+
+          {/* Section 2: Pengaturan Rentang Nilai & Umpan Balik Otomatis */}
+          <div className="bg-white rounded-3xl p-5 sm:p-8 shadow-sm border border-slate-200/80 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                  Pengaturan Rentang Nilai & Teks Umpan Balik
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Teks evaluasi deskriptif otomatis yang diterima murid setelah pengumpulan LKM
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (activeLkm) {
+                    lkmEngine.updateLKMSettings(activeLkm.id, {
+                      allowRetake,
+                      isActive: lkmIsActive
+                    });
+                  }
+                  lkmEngine.updateFeedbackRules(editableFeedbackRules);
+                  setSettingSaveToast('Pengaturan berhasil disimpan!');
+                  setTimeout(() => setSettingSaveToast(''), 4000);
+                }}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer self-start sm:self-auto"
+              >
+                <Save className="w-4 h-4" />
+                <span>Simpan Pengaturan</span>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {editableFeedbackRules.map((rule, idx) => (
+                <div key={idx} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2.5 py-1 rounded-lg bg-blue-900 text-white font-mono font-bold text-xs">
+                        {rule.minScore} – {rule.maxScore}
+                      </span>
+                      <strong className="text-xs sm:text-sm text-slate-900">
+                        Kategori: {rule.kategori}
+                      </strong>
+                    </div>
+                    <span className="text-[11px] text-slate-500 italic">
+                      Arah: {rule.arah}
+                    </span>
+                  </div>
+
+                  <textarea
+                    rows={2}
+                    value={rule.teks}
+                    onChange={(e) => {
+                      const updated = [...editableFeedbackRules];
+                      updated[idx].teks = e.target.value;
+                      setEditableFeedbackRules(updated);
+                    }}
+                    className="w-full p-3 rounded-xl border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none text-xs text-slate-800 bg-white"
+                  />
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (activeLkm) {
+                    lkmEngine.updateLKMSettings(activeLkm.id, {
+                      allowRetake,
+                      isActive: lkmIsActive
+                    });
+                  }
+                  lkmEngine.updateFeedbackRules(editableFeedbackRules);
+                  setSettingSaveToast('Pengaturan LKM dan umpan balik otomatis berhasil disimpan!');
+                  setTimeout(() => setSettingSaveToast(''), 4000);
+                }}
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2 shadow-md transition-colors cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>Simpan Seluruh Pengaturan</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Section 3: Akses Keamanan & Pemeliharaan Data */}
+          <div className="bg-white rounded-3xl p-5 sm:p-8 shadow-sm border border-slate-200/80 space-y-5">
+            <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
+                <Key className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">
+                  Keamanan Akses & Pemeliharaan Data
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Pengaturan otentikasi guru dan pembersihan data simulasi
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <strong className="block text-slate-900 font-bold">PIN Akses Guru Saat Ini:</strong>
+                <p className="text-slate-500">
+                  Untuk keamanan ruang asesmen, akses guru diproteksi dengan PIN: <code className="bg-slate-200 px-1.5 py-0.5 rounded font-mono font-bold text-slate-900">1234</code>
+                </p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-rose-50/70 border border-rose-200 space-y-3">
+                <strong className="block text-rose-900 font-bold flex items-center gap-1.5">
+                  <ShieldAlert className="w-4 h-4 text-rose-600" />
+                  <span>Alat Pengujian & Pembersihan Data</span>
+                </strong>
+                <p className="text-rose-800 text-[11px] leading-relaxed">
+                  Gunakan tombol ini jika Anda ingin mengosongkan data simulasi pengerjaan sebelum murid mulai mengerjakan, atau memuat ulang data default.
                 </p>
 
-                {q.opsi && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs text-slate-700 pt-1">
-                    {q.opsi.map((op) => (
-                      <div
-                        key={op.key}
-                        className={`p-2 rounded-lg border ${
-                          op.key === q.kunciJawaban
-                            ? 'bg-emerald-50 border-emerald-300 font-bold text-emerald-900'
-                            : 'bg-slate-50 border-slate-200'
-                        }`}
-                      >
-                        <strong>{op.key}.</strong> {op.text}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('Kosongkan semua data pengerjaan hasil simulasi?')) {
+                        lkmEngine.resetSubmissions();
+                        setSettingSaveToast('Data pengerjaan berhasil dikosongkan.');
+                        setTimeout(() => setSettingSaveToast(''), 4000);
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm transition-colors cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Kosongkan Data Simulasi</span>
+                  </button>
 
-                {q.pembahasan && (
-                  <div className="p-2.5 rounded-xl bg-blue-50/60 text-xs text-blue-900 border border-blue-200/50">
-                    <strong>Pembahasan Guru:</strong> {q.pembahasan}
-                  </div>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      lkmEngine.reloadSeededSubmissions();
+                      setSettingSaveToast('Data sampel SMAN 1 Tejakula telah dimuat ulang.');
+                      setTimeout(() => setSettingSaveToast(''), 4000);
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold text-[11px] flex items-center gap-1 transition-colors cursor-pointer"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Muat Ulang Data Sampel</span>
+                  </button>
+                </div>
               </div>
-            ))}
+            </div>
           </div>
         </div>
       )}

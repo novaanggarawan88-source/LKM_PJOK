@@ -74,29 +74,29 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="flex items-center justify-between h-18 sm:h-20">
             {/* Logo & School Identity */}
             <div 
-              className="flex items-center space-x-3 cursor-pointer group"
+              className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group shrink min-w-0"
               onClick={() => onSelectTab('murid')}
             >
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center p-2 border border-white/20 shadow-inner group-hover:scale-105 transition-transform">
-                <GraduationCap className="w-7 h-7 text-emerald-400" />
+              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center p-1.5 sm:p-2 border border-white/20 shadow-inner group-hover:scale-105 transition-transform shrink-0">
+                <GraduationCap className="w-5 h-5 sm:w-7 sm:h-7 text-emerald-400" />
               </div>
-              <div>
-                <div className="flex items-center space-x-2">
-                  <h1 className="text-base sm:text-xl font-bold tracking-tight text-white flex items-center gap-1.5">
+              <div className="min-w-0">
+                <div className="flex items-center space-x-1.5 sm:space-x-2">
+                  <h1 className="text-xs sm:text-xl font-bold tracking-tight text-white flex items-center gap-1 truncate">
                     LKM DIGITAL PJOK
-                    <span className="hidden sm:inline-block text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                    <span className="hidden sm:inline-block text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
                       Fase F
                     </span>
                   </h1>
                 </div>
-                <p className="text-xs sm:text-sm text-blue-100/90 font-medium line-clamp-1">
-                  SMA Negeri 1 Tejakula • Guru: I Ketut Agus Nova Anggarawan, S.Pd.
+                <p className="text-[10px] sm:text-sm text-blue-100/90 font-medium truncate">
+                  SMAN 1 Tejakula • Pak Agus Nova, S.Pd.
                 </p>
               </div>
             </div>
 
             {/* Right Action & Role Switcher */}
-            <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
               {/* Google Sheets Sync Indicator */}
               <button
                 onClick={handleTriggerSync}
@@ -113,30 +113,30 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
 
               {/* Navigation Mode Pill */}
-              <div className="flex items-center bg-black/20 p-1 rounded-xl border border-white/10 backdrop-blur-sm">
+              <div className="flex items-center bg-black/25 p-0.5 sm:p-1 rounded-xl border border-white/10 backdrop-blur-sm">
                 <button
                   onClick={() => onSelectTab('murid')}
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+                  className={`flex items-center space-x-1 px-2.5 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                     currentTab === 'murid'
                       ? 'bg-white text-blue-900 shadow-md font-bold'
                       : 'text-blue-100 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  <User className="w-4 h-4" />
+                  <User className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span>Murid</span>
                 </button>
 
                 <button
                   onClick={handleTeacherClick}
-                  className={`flex items-center space-x-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+                  className={`flex items-center space-x-1 px-2.5 py-1 sm:px-4 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
                     currentTab === 'guru'
                       ? 'bg-emerald-500 text-white shadow-md font-bold'
                       : 'text-blue-100 hover:text-white hover:bg-white/10'
                   }`}
                 >
-                  <ShieldCheck className="w-4 h-4" />
+                  <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   <span>Guru</span>
-                  {!isTeacherAuthenticated && <Lock className="w-3 h-3 text-emerald-300 ml-0.5 opacity-70" />}
+                  {!isTeacherAuthenticated && <Lock className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-emerald-300 ml-0.5 opacity-70" />}
                 </button>
               </div>
             </div>

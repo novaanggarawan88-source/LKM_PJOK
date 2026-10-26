@@ -3,6 +3,7 @@ import { Navbar } from './components/Navbar';
 import { StudentHome } from './components/StudentHome';
 import { ExamScreen } from './components/ExamScreen';
 import { ResultScreen } from './components/ResultScreen';
+import { ReflectionSidebar } from './components/ReflectionSidebar';
 import { TeacherDashboard } from './components/TeacherDashboard';
 import { PrintReportModal } from './components/PrintReportModal';
 import { lkmEngine } from './services/lkmEngine';
@@ -20,6 +21,7 @@ export default function App() {
   const [currentLKM, setCurrentLKM] = useState<LKMInfo | null>(null);
   const [clientQuestions, setClientQuestions] = useState<QuestionClient[]>([]);
   const [activeSubmission, setActiveSubmission] = useState<SubmissionResult | null>(null);
+  const [isReflectionSidebarOpen, setIsReflectionSidebarOpen] = useState(false);
   
   const [showPrintModal, setShowPrintModal] = useState(false);
 
@@ -140,6 +142,7 @@ export default function App() {
                 onRetake={currentLKM?.allowRetake ? handleRetakeExam : undefined}
                 onBackToHome={handleBackToHome}
                 onOpenPrintModal={() => setShowPrintModal(true)}
+                onOpenReflectionSidebar={() => setIsReflectionSidebarOpen(true)}
               />
             )}
           </>
@@ -149,6 +152,18 @@ export default function App() {
           <TeacherDashboard onBackToStudent={() => setActiveTab('murid')} />
         )}
       </main>
+
+      {/* Dedicated Student Reflection Sidebar / Drawer */}
+      <ReflectionSidebar
+        isOpen={isReflectionSidebarOpen}
+        onClose={() => setIsReflectionSidebarOpen(false)}
+        submission={activeSubmission}
+        onSavedSuccess={() => {
+          if (activeSubmission) {
+            setActiveSubmission({ ...activeSubmission, refleksiTersimpan: true });
+          }
+        }}
+      />
 
       {/* Single Submission Print Modal */}
       {showPrintModal && activeSubmission && (

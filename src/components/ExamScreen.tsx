@@ -111,18 +111,18 @@ export const ExamScreen: React.FC<ExamScreenProps> = ({
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6 space-y-6 animate-fadeIn pb-24">
+    <div className="w-full max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-6 space-y-4 sm:space-y-6 animate-fadeIn pb-28 overflow-x-hidden">
       {/* Top Header Card */}
-      <div className="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-2xl p-3.5 sm:p-5 shadow-sm border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="px-2.5 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[11px] font-bold">
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <span className="px-2 py-0.5 rounded-md bg-blue-100 text-blue-800 text-[10px] sm:text-[11px] font-bold">
               {lkm.kelas} • {lkm.fase}
             </span>
             <span className="text-xs text-slate-400">•</span>
-            <span className="text-xs font-semibold text-slate-600">{student.nama} ({student.kelas})</span>
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-600 line-clamp-1">{student.nama} ({student.kelas})</span>
           </div>
-          <h2 className="text-base sm:text-lg font-bold text-slate-900 mt-1">
+          <h2 className="text-sm sm:text-lg font-bold text-slate-900 mt-1 line-clamp-1">
             {lkm.judul}
           </h2>
         </div>
@@ -168,47 +168,47 @@ export const ExamScreen: React.FC<ExamScreenProps> = ({
       </div>
 
       {/* Main Question Display Card */}
-      <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-200/80 space-y-6">
+      <div className="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-sm border border-slate-200/80 space-y-4 sm:space-y-6">
         {/* Question Header Badges */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-2.5">
-            <span className="w-9 h-9 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-base shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 sm:pb-4 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <span className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-600 text-white font-extrabold flex items-center justify-center text-sm sm:text-base shadow-sm shrink-0">
               {currentQ.nomor}
             </span>
             <div>
-              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span className="text-[10px] sm:text-xs font-semibold text-slate-400 uppercase tracking-wider block">
                 Soal {currentQ.nomor} dari {totalQuestions}
               </span>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-200">
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] sm:text-[11px] font-semibold border border-emerald-200 line-clamp-1">
                   Indikator: {currentQ.indikator}
                 </span>
               </div>
             </div>
           </div>
 
-          <span className="text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+          <span className="text-[11px] sm:text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full">
             Bobot: {currentQ.bobot} Poin
           </span>
         </div>
 
         {/* Question Text */}
-        <div className="text-base sm:text-lg font-semibold text-slate-900 leading-relaxed">
+        <div className="text-sm sm:text-lg font-semibold text-slate-900 leading-relaxed">
           {currentQ.pertanyaan}
         </div>
 
         {/* Options / Answer Input based on Type */}
-        <div className="space-y-3 pt-2">
+        <div className="space-y-2.5 sm:space-y-3 pt-1 sm:pt-2">
           {/* Pilihan Ganda (A - E) */}
           {currentQ.tipe === 'pilihan_ganda' && currentQ.opsi && (
-            <div className="space-y-2.5">
+            <div className="space-y-2 sm:space-y-2.5">
               {currentQ.opsi.map((opsi) => {
                 const isSelected = answers[currentQ.id] === opsi.key;
                 return (
                   <div
                     key={opsi.key}
                     onClick={() => handleSelectOption(currentQ.id, opsi.key)}
-                    className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-3.5 select-none ${
+                    className={`p-3 sm:p-4 rounded-xl sm:rounded-2xl border-2 cursor-pointer transition-all flex items-start gap-2.5 sm:gap-3.5 select-none ${
                       isSelected
                         ? 'border-blue-600 bg-blue-50/70 shadow-sm'
                         : 'border-slate-200/80 hover:border-blue-300 hover:bg-slate-50/60'

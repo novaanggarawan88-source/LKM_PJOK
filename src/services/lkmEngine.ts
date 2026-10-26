@@ -600,6 +600,27 @@ class LKMEngineService {
     this.feedbackRules = newRules;
     localStorage.setItem(STORAGE_KEYS.FEEDBACK_RULES, JSON.stringify(newRules));
   }
+
+  public updateLKMSettings(lkmId: string, settings: { allowRetake?: boolean; isActive?: boolean }) {
+    const lkm = this.lkms.find((l) => l.id === lkmId);
+    if (lkm) {
+      if (typeof settings.allowRetake === 'boolean') lkm.allowRetake = settings.allowRetake;
+      if (typeof settings.isActive === 'boolean') lkm.isActive = settings.isActive;
+      localStorage.setItem(STORAGE_KEYS.LKMS, JSON.stringify(this.lkms));
+    }
+  }
+
+  public resetSubmissions() {
+    this.submissions = [];
+    this.reflections = [];
+    localStorage.removeItem(STORAGE_KEYS.SUBMISSIONS);
+    localStorage.removeItem(STORAGE_KEYS.REFLECTIONS);
+  }
+
+  public reloadSeededSubmissions() {
+    this.submissions = [...INITIAL_SUBMISSIONS_SEEDED];
+    this.saveSubmissions();
+  }
 }
 
 export const lkmEngine = new LKMEngineService();
